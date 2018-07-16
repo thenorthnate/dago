@@ -62,6 +62,31 @@ func (ss intSeries) getName() string {
   return ss.Name
 }
 
+func (ss intSeries) convertTo(dtype string) Series {
+  switch dtype {
+  case "int":
+    return ss
+  case "string":
+    ns := make([]string, len(ss.Data))
+		for i, val := range ss.Data {
+			ns[i] = fmt.Sprintf("%v", val)
+		}
+    return makeStringSeries(ns, ss.NilData, ss.Name)
+  case "float64":
+    nf := make([]float64, len(ss.Data))
+		for i, val := range ss.Data {
+			nf[i] = float64(val)
+		}
+    return makeFloatSeries(nf, ss.NilData, ss.Name)
+  case "time.Time":
+    nt := make([]time.Time, len(ss.Data))
+		for i, val := range ss.Data {
+			nt[i] = time.Unix(int64(val), 0)
+		}
+    return makeTimeSeries(nt, ss.NilData, ss.Name)
+  }
+}
+
 // STRING SERIES
 type stringSeries struct {
   Name string
@@ -211,61 +236,7 @@ func (ss timeSeries) getName() string {
 
 
 /*
-func (ds *dset) convertToInt() {
-	if len(ds.iData) > 0 {
-		return
-	}
-	if len(ds.sData) > 0 {
 
-	}
-	if len(ds.fData) > 0 {
-
-	}
-	if len(ds.tData) > 0 {
-
-	}
-}
-
-func (ds *dset) convertToString() {
-	if len(ds.iData) > 0 {
-		ns := make([]string, len(v))
-		for i, val := range v {
-			ns[i] = fmt.Sprintf("%v", val)
-		}
-		ss.Data.sData = ns
-		ss.Data.iData = nil
-		DF.Sets[index] = ss
-	}
-	if len(ds.sData) > 0 {
-		return
-	}
-	if len(ds.fData) > 0 {
-
-	}
-	if len(ds.tData) > 0 {
-
-	}
-}
-
-func (ds *dset) convertToFloat64() {
-	if len(ds.iData) > 0 {
-		nf := make([]float64, len(ds.iData))
-		for i, val := range ds.iData {
-			nf[i] = float64(val)
-		}
-		ds.fData = nf
-		ds.iData = nil
-	}
-	if len(ds.sData) > 0 {
-
-	}
-	if len(ds.fData) > 0 {
-		return
-	}
-	if len(ds.tData) > 0 {
-
-	}
-}
 
 func (ds *dset) convertToTime() {
 	if len(ds.iData) > 0 {
