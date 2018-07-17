@@ -11,6 +11,7 @@ type Series interface {
   getSeriesData(start int, count int) (interface{}, string)
   getName() string
   changeName(name string) Series
+  getLength() int
 }
 
 // INT SERIES
@@ -62,6 +63,10 @@ func (ss intSeries) getName() string {
   return ss.Name
 }
 
+func (ss intSeries) getLength() int {
+  return len(ss.Data)
+}
+
 func (ss intSeries) convertTo(dtype string) Series {
   switch dtype {
   case "int":
@@ -85,6 +90,7 @@ func (ss intSeries) convertTo(dtype string) Series {
 		}
     return makeTimeSeries(nt, ss.NilData, ss.Name)
   }
+  return ss
 }
 
 // STRING SERIES
@@ -136,6 +142,10 @@ func (ss stringSeries) getName() string {
   return ss.Name
 }
 
+func (ss stringSeries) getLength() int {
+  return len(ss.Data)
+}
+
 // FLOAT SERIES
 type float64Series struct {
   Name string
@@ -183,6 +193,10 @@ func (ss float64Series) changeName(name string) Series {
 
 func (ss float64Series) getName() string {
   return ss.Name
+}
+
+func (ss float64Series) getLength() int {
+  return len(ss.Data)
 }
 
 // TIME SERIES
@@ -234,29 +248,6 @@ func (ss timeSeries) getName() string {
   return ss.Name
 }
 
-
-/*
-
-
-func (ds *dset) convertToTime() {
-	if len(ds.iData) > 0 {
-		nt := make([]time.Time, len(v))
-		for i, val := range v {
-			nt[i] = time.Unix(int64(val), 0)
-		}
-		ss.Data.tData = nt
-		ss.Data.iData = nil
-		DF.Sets[index] = ss
-	}
-	if len(ds.sData) > 0 {
-
-	}
-	if len(ds.fData) > 0 {
-
-	}
-	if len(ds.tData) > 0 {
-		return
-	}
+func (ss timeSeries) getLength() int {
+  return len(ss.Data)
 }
-
-*/

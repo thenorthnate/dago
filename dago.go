@@ -67,9 +67,21 @@ func New(data ...interface{}) DataFrame {
 // Add : Add new data to a pre-existing DataFrame
 func (DF *DataFrame) Add(data interface{}) {
 	newDf := New(data)
-	for _, v := range newDf.Sets {
-		DF.Sets = append(DF.Sets, v)
+	if DF.level {
+		if newDf.level {
+			if newDf.Sets[0].getLength() == DF.Sets[0].getLength() {
+				for _, v := range newDf.Sets {
+					DF.Sets = append(DF.Sets, v)
+				}
+			}
+		}
+
+	} else {
+		for _, v := range newDf.Sets {
+			DF.Sets = append(DF.Sets, v)
+		}
 	}
+
 }
 
 // GetInts : Returns the slice of ints in that series, or an empty slice if series has no ints
@@ -168,7 +180,8 @@ func (DF *DataFrame) Levelize() {
 func (DF *DataFrame) Head(rows int) {
 	for i, v := range DF.Sets {
 		data, dtype := v.getSeriesData(0, rows)
-		fmt.Printf("%v, %v (%v)\t%v\n", i, DF.Sets[i].getName(), dtype, data)
+		DType := string(dtype[0]) + fmt.Sprintf("%v", DF.Sets[i].getLength()) + string(dtype[1:])
+		fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].getName(), DType, data)
 	}
 }
 
@@ -176,25 +189,41 @@ func (DF *DataFrame) Head(rows int) {
 func (DF *DataFrame) Tail(rows int) {
 	for i, v := range DF.Sets {
 		data, dtype := v.getSeriesData(-rows, rows)
-		fmt.Printf("%v, %v (%v)\t%v\n", i, DF.Sets[i].getName(), dtype, data)
+		DType := string(dtype[0]) + fmt.Sprintf("%v", DF.Sets[i].getLength()) + string(dtype[1:])
+		fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].getName(), DType, data)
 	}
 }
 
 /*
+
+// Reorder : Reorders the DataFrame to the order specified in the input
+func (DF *DataFrame) Reorder(ser ...string) {
+	indicies := DF.getIndicies(ser)
+
+}
 
 // Convert : converts a series of one type to a series of another type
 func (DF *DataFrame) Convert(index int, dtype string) {
 
 }
 
-// InsertData : Inserts new data at the given index; if index == -1, appends to the end
-func (DF *DataFrame) InsertData(name string, data interface{}, index int) {
-  return
+// Transpose : tranposes the dataset... probably not very useful unless you load in the data manually
+func (DF *DataFrame) Transpose() {
+
+}
+
+// Restructure : Restructures the dataset with specified column
+func (DF *DataFrame) Restructure(by string) {
+
 }
 
 // Describe : Returns another DataFrame with a full set of descriptive statistics of the dataset
 func (DF *DataFrame) Describe() DataFrame {
   return DataFrame{}
+}
+
+type Group struct {
+	Groups []DataFrame
 }
 
 // GroupBy : Returns a slice of DataFrames each one grouped by the given parameter
