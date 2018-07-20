@@ -15,22 +15,6 @@ type DataFrame struct {
 type Options struct {
 }
 
-/*
-type series struct {
-	Name    string
-	Data    dset
-	NilData []int // stores the indices of any nil values
-	// Dtype   string
-}
-
-type dset struct {
-	iData []int
-	sData []string
-	fData []float64
-	tData []time.Time
-}
-*/
-
 // New : Returns a new DataFrame object
 func New(data ...interface{}) DataFrame {
 	DF := DataFrame{}
@@ -119,8 +103,8 @@ func (DF *DataFrame) getIndicies(sets ...interface{}) []int {
 }
 
 // Select : Make a selection from the current DataFrame
-func (DF *DataFrame) Select(sets ...interface{}) DataFrame {
-	selectedIndicies := DF.getIndicies(sets)
+func (DF *DataFrame) Select(columns ...interface{}) DataFrame {
+	selectedIndicies := DF.getIndicies(columns)
 	newDF := DataFrame{}
 	for _, v := range selectedIndicies {
 		if v >= 0 && v < len(DF.Sets) {
@@ -193,6 +177,11 @@ func (DF *DataFrame) Tail(rows int) {
 		DType := string(dtype[0]) + fmt.Sprintf("%v", DF.Sets[i].getLength()) + string(dtype[1:])
 		fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].getName(), DType, data)
 	}
+}
+
+// Filter : filters the selected column by the value per the logical operator
+func (DF *DataFrame) Filter(column interface{}, logicalOp string, value interface{}) {
+
 }
 
 /*
