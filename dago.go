@@ -59,6 +59,7 @@ func New(data ...interface{}) DataFrame {
 		default:
 			// do something
 		}
+		// go DF.Sets[len(DF.Sets)-1].getDescription()
 	}
 
 	return DF

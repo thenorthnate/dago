@@ -58,6 +58,31 @@ func readCSV(data []byte, header bool) DataFrame {
 	return DF
 }
 
+/*
+file, err := os.Open("filetoread.txt")
+if err != nil {
+  fmt.Println(err)
+  return
+}
+defer file.Close()
+
+scanner := bufio.NewScanner(file)
+scanner.Split(bufio.ScanLines)
+
+// This is our buffer now
+var lines []string
+
+for scanner.Scan() {
+  lines = append(lines, scanner.Text())
+}
+
+fmt.Println("read lines:")
+for _, line := range lines {
+  fmt.Println(line)
+}
+
+*/
+
 func readJSON(data []byte) DataFrame {
 	DF := DataFrame{}
 	return DF
