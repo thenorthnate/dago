@@ -54,7 +54,7 @@ func (DF *DataFrame) Add(data interface{}) {
 	newDf := New(data)
 	if DF.level {
 		if newDf.level {
-			if newDf.Sets[0].getLength() == DF.Sets[0].getLength() {
+			if newDf.Sets[0].Dstats.length == DF.Sets[0].Dstats.length {
 				for _, v := range newDf.Sets {
 					DF.Sets = append(DF.Sets, v)
 				}
@@ -164,7 +164,7 @@ func (DF *DataFrame) Levelize() {
 func (DF *DataFrame) Head(rows int) {
 	for i, v := range DF.Sets {
 		data, dtype := v.getSeriesData(0, rows)
-		serLen := DF.Sets[i].getLength()
+		serLen := DF.Sets[i].Dstats.length
 		DType := string(dtype[0]) + fmt.Sprintf("%v", serLen) + string(dtype[1:])
 		if rows >= serLen {
 			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].Name, DType, data)
@@ -179,7 +179,7 @@ func (DF *DataFrame) Head(rows int) {
 func (DF *DataFrame) Tail(rows int) {
 	for i, v := range DF.Sets {
 		data, dtype := v.getSeriesData(-rows, rows)
-		serLen := DF.Sets[i].getLength()
+		serLen := DF.Sets[i].Dstats.length
 		DType := string(dtype[0]) + fmt.Sprintf("%v", serLen) + string(dtype[1:])
 		if rows >= serLen {
 			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].Name, DType, data)

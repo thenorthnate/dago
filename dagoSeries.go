@@ -14,32 +14,36 @@ type Series struct {
 	Fdata   []float64
 	Tdata   []time.Time
 	Nildata []int
-	Dstats  map[string]interface{}
+	Dstats  sstats
+}
+
+type sstats struct {
+	length int
+	dtype  string
 }
 
 func makeSeries(data interface{}, nilData []int, sName string) Series {
 	S := Series{
 		Name:    sName,
 		Nildata: nilData,
-		Dstats:  make(map[string]interface{}),
 	}
 	switch D := data.(type) {
 	case []int:
 		S.Idata = D
-		S.Dstats["len"] = len(D)
-		S.Dstats["type"] = "int"
+		S.Dstats.length = len(D)
+		S.Dstats.dtype = "int"
 	case []string:
 		S.Sdata = D
-		S.Dstats["len"] = len(D)
-		S.Dstats["type"] = "string"
+		S.Dstats.length = len(D)
+		S.Dstats.dtype = "string"
 	case []float64:
 		S.Fdata = D
-		S.Dstats["len"] = len(D)
-		S.Dstats["type"] = "float64"
+		S.Dstats.length = len(D)
+		S.Dstats.dtype = "float64"
 	case []time.Time:
 		S.Tdata = D
-		S.Dstats["len"] = len(D)
-		S.Dstats["type"] = "time.Time"
+		S.Dstats.length = len(D)
+		S.Dstats.dtype = "time.Time"
 	}
 	// Run stats here? or in New func?
 	return S
@@ -69,8 +73,8 @@ func getDataIndicies(start int, count int, dLen int) (int, int) {
 }
 
 func (S *Series) getSeriesData(start int, count int) (interface{}, string) {
-	first, last := getDataIndicies(start, count, S.getLength())
-	switch S.getType() {
+	first, last := getDataIndicies(start, count, S.Dstats.length)
+	switch S.Dstats.dtype {
 	case "int":
 		data := S.Idata[first:last]
 		return data, fmt.Sprintf("%T", data)
@@ -86,16 +90,6 @@ func (S *Series) getSeriesData(start int, count int) (interface{}, string) {
 	}
 	data := -1
 	return data, fmt.Sprintf("%T", data)
-}
-
-func (S *Series) getLength() int {
-	dLen, _ := S.Dstats["len"].(int)
-	return dLen
-}
-
-func (S *Series) getType() string {
-	dType, _ := S.Dstats["type"].(string)
-	return dType
 }
 
 func (S *Series) goDescribe() {
