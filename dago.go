@@ -21,24 +21,24 @@ func New(data ...interface{}) DataFrame {
 	for _, item := range data {
 		switch d := item.(type) {
 		case []int:
-			DF.Sets = append(DF.Sets, makeIntSeries(d, []int{}, ""))
+			DF.Sets = append(DF.Sets, makeSeries(d, []int{}, ""))
 		case []string:
-			DF.Sets = append(DF.Sets, makeStringSeries(d, []int{}, ""))
+			DF.Sets = append(DF.Sets, makeSeries(d, []int{}, ""))
 		case []float64:
-			DF.Sets = append(DF.Sets, makeFloatSeries(d, []int{}, ""))
+			DF.Sets = append(DF.Sets, makeSeries(d, []int{}, ""))
 		case []time.Time:
-			DF.Sets = append(DF.Sets, makeTimeSeries(d, []int{}, ""))
+			DF.Sets = append(DF.Sets, makeSeries(d, []int{}, ""))
 		case [][]int:
 			for _, v := range d {
-				DF.Sets = append(DF.Sets, makeIntSeries(v, []int{}, ""))
+				DF.Sets = append(DF.Sets, makeSeries(v, []int{}, ""))
 			}
 		case map[string][]int:
 			for k, v := range d {
-				DF.Sets = append(DF.Sets, makeIntSeries(v, []int{}, k))
+				DF.Sets = append(DF.Sets, makeSeries(v, []int{}, k))
 			}
 		case map[string][]string:
 			for k, v := range d {
-				DF.Sets = append(DF.Sets, makeStringSeries(v, []int{}, k))
+				DF.Sets = append(DF.Sets, makeSeries(v, []int{}, k))
 			}
 		default:
 			// do something
@@ -85,14 +85,16 @@ func (DF *DataFrame) getIndicies(sets ...interface{}) []int {
 	for _, v := range sets {
 		switch name := v.(type) {
 		case string:
-			for i, ss := range DF.Sets {
-				setName := ss.getName()
+			for i, S := range DF.Sets {
+				setName := S.Name
 				if setName == name {
 					selectedIndicies[i] = true
 				}
 			}
 		case int:
-			selectedIndicies[name] = true
+			if name >= 0 && name < len(DF.Sets) {
+				selectedIndicies[name] = true
+			}
 		}
 	}
 	outIndicies := []int{}
@@ -107,9 +109,7 @@ func (DF *DataFrame) Select(columns ...interface{}) DataFrame {
 	selectedIndicies := DF.getIndicies(columns)
 	newDF := DataFrame{}
 	for _, v := range selectedIndicies {
-		if v >= 0 && v < len(DF.Sets) {
-			newDF.Sets = append(newDF.Sets, DF.Sets[v])
-		}
+		newDF.Sets = append(newDF.Sets, DF.Sets[v])
 	}
 	return newDF
 }
@@ -147,11 +147,10 @@ func (DF *DataFrame) Delete(index int, name string) {
 */
 
 // Rename : Allows user to edit the name of a series
-func (DF *DataFrame) Rename(index int, name string) {
-	if index < len(DF.Sets) && index >= 0 {
-		ss := DF.Sets[index]
-		ss = ss.changeName(name)
-		DF.Sets[index] = ss
+func (DF *DataFrame) Rename(columns interface{}, name string) {
+	selectedIndicies := DF.getIndicies(columns)
+	for _, v := range selectedIndicies {
+		DF.Sets[v].Name = name
 	}
 }
 
@@ -168,9 +167,9 @@ func (DF *DataFrame) Head(rows int) {
 		serLen := DF.Sets[i].getLength()
 		DType := string(dtype[0]) + fmt.Sprintf("%v", serLen) + string(dtype[1:])
 		if rows >= serLen {
-			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].getName(), DType, data)
+			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].Name, DType, data)
 		} else {
-			fmt.Printf("%5v %15v %20v\t%v...\n", i, DF.Sets[i].getName(), DType, data)
+			fmt.Printf("%5v %15v %20v\t%v...\n", i, DF.Sets[i].Name, DType, data)
 		}
 	}
 	fmt.Println()
@@ -183,9 +182,9 @@ func (DF *DataFrame) Tail(rows int) {
 		serLen := DF.Sets[i].getLength()
 		DType := string(dtype[0]) + fmt.Sprintf("%v", serLen) + string(dtype[1:])
 		if rows >= serLen {
-			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].getName(), DType, data)
+			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].Name, DType, data)
 		} else {
-			fmt.Printf("%5v %15v %20v\t...%v\n", i, DF.Sets[i].getName(), DType, data)
+			fmt.Printf("%5v %15v %20v\t...%v\n", i, DF.Sets[i].Name, DType, data)
 		}
 	}
 	fmt.Println()
@@ -194,6 +193,11 @@ func (DF *DataFrame) Tail(rows int) {
 // Filter : filters the selected column by the value per the logical operator
 func (DF *DataFrame) Filter(column interface{}, logicalOp string, value interface{}) {
 
+}
+
+// Describe : Returns another DataFrame with a full set of descriptive statistics of the dataset
+func (DF *DataFrame) Describe() DataFrame {
+	return DataFrame{}
 }
 
 /*
@@ -217,11 +221,6 @@ func (DF *DataFrame) Transpose() {
 // Restructure : Restructures the dataset with specified column
 func (DF *DataFrame) Restructure(by string) {
 
-}
-
-// Describe : Returns another DataFrame with a full set of descriptive statistics of the dataset
-func (DF *DataFrame) Describe() DataFrame {
-  return DataFrame{}
 }
 
 type Group struct {

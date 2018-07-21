@@ -6,12 +6,43 @@ import (
 	"time"
 )
 
-// Series : interface for series objects
-type Series interface {
-	getSeriesData(start int, count int) (interface{}, string)
-	getName() string
-	changeName(name string) Series
-	getLength() int
+// Series : struct holding each dataset
+type Series struct {
+	Name    string
+	Idata   []int
+	Sdata   []string
+	Fdata   []float64
+	Tdata   []time.Time
+	Nildata []int
+	Dstats  map[string]interface{}
+}
+
+func makeSeries(data interface{}, nilData []int, sName string) Series {
+	S := Series{
+		Name:    sName,
+		Nildata: nilData,
+		Dstats:  make(map[string]interface{}),
+	}
+	switch D := data.(type) {
+	case []int:
+		S.Idata = D
+		S.Dstats["len"] = len(D)
+		S.Dstats["type"] = "int"
+	case []string:
+		S.Sdata = D
+		S.Dstats["len"] = len(D)
+		S.Dstats["type"] = "string"
+	case []float64:
+		S.Fdata = D
+		S.Dstats["len"] = len(D)
+		S.Dstats["type"] = "float64"
+	case []time.Time:
+		S.Tdata = D
+		S.Dstats["len"] = len(D)
+		S.Dstats["type"] = "time.Time"
+	}
+	// Run stats here? or in New func?
+	return S
 }
 
 func getDataIndicies(start int, count int, dLen int) (int, int) {
@@ -37,164 +68,36 @@ func getDataIndicies(start int, count int, dLen int) (int, int) {
 	return dLen, dLen
 }
 
-// INT SERIES
-type intSeries struct {
-	Name    string
-	Data    []int
-	NilData []int
-}
-
-func makeIntSeries(data []int, nilData []int, name string) intSeries {
-	ss := intSeries{
-		Name:    name,
-		Data:    data,
-		NilData: nilData,
-	}
-	return ss
-}
-
-func (ss intSeries) getSeriesData(start int, count int) (interface{}, string) {
-	first, last := getDataIndicies(start, count, len(ss.Data))
-	return ss.Data[first:last], fmt.Sprintf("%T", ss.Data)
-}
-
-func (ss intSeries) changeName(name string) Series {
-	ss.Name = name
-	return ss
-}
-
-func (ss intSeries) getName() string {
-	return ss.Name
-}
-
-func (ss intSeries) getLength() int {
-	return len(ss.Data)
-}
-
-func (ss intSeries) convertTo(dtype string) Series {
-	switch dtype {
+func (S *Series) getSeriesData(start int, count int) (interface{}, string) {
+	first, last := getDataIndicies(start, count, S.getLength())
+	switch S.getType() {
 	case "int":
-		return ss
+		data := S.Idata[first:last]
+		return data, fmt.Sprintf("%T", data)
 	case "string":
-		ns := make([]string, len(ss.Data))
-		for i, val := range ss.Data {
-			ns[i] = fmt.Sprintf("%v", val)
-		}
-		return makeStringSeries(ns, ss.NilData, ss.Name)
+		data := S.Sdata[first:last]
+		return data, fmt.Sprintf("%T", data)
 	case "float64":
-		nf := make([]float64, len(ss.Data))
-		for i, val := range ss.Data {
-			nf[i] = float64(val)
-		}
-		return makeFloatSeries(nf, ss.NilData, ss.Name)
+		data := S.Fdata[first:last]
+		return data, fmt.Sprintf("%T", data)
 	case "time.Time":
-		nt := make([]time.Time, len(ss.Data))
-		for i, val := range ss.Data {
-			nt[i] = time.Unix(int64(val), 0)
-		}
-		return makeTimeSeries(nt, ss.NilData, ss.Name)
+		data := S.Tdata[first:last]
+		return data, fmt.Sprintf("%T", data)
 	}
-	return ss
+	data := -1
+	return data, fmt.Sprintf("%T", data)
 }
 
-// STRING SERIES
-type stringSeries struct {
-	Name    string
-	Data    []string
-	NilData []int
+func (S *Series) getLength() int {
+	dLen, _ := S.Dstats["len"].(int)
+	return dLen
 }
 
-func makeStringSeries(data []string, nilData []int, name string) stringSeries {
-	ss := stringSeries{
-		Name:    name,
-		Data:    data,
-		NilData: nilData,
-	}
-	return ss
+func (S *Series) getType() string {
+	dType, _ := S.Dstats["type"].(string)
+	return dType
 }
 
-func (ss stringSeries) getSeriesData(start int, count int) (interface{}, string) {
-	first, last := getDataIndicies(start, count, len(ss.Data))
-	return ss.Data[first:last], fmt.Sprintf("%T", ss.Data)
-}
+func (S *Series) goDescribe() {
 
-func (ss stringSeries) changeName(name string) Series {
-	ss.Name = name
-	return ss
-}
-
-func (ss stringSeries) getName() string {
-	return ss.Name
-}
-
-func (ss stringSeries) getLength() int {
-	return len(ss.Data)
-}
-
-// FLOAT SERIES
-type float64Series struct {
-	Name    string
-	Data    []float64
-	NilData []int
-}
-
-func makeFloatSeries(data []float64, nilData []int, name string) float64Series {
-	ss := float64Series{
-		Name:    name,
-		Data:    data,
-		NilData: nilData,
-	}
-	return ss
-}
-
-func (ss float64Series) getSeriesData(start int, count int) (interface{}, string) {
-	first, last := getDataIndicies(start, count, len(ss.Data))
-	return ss.Data[first:last], fmt.Sprintf("%T", ss.Data)
-}
-
-func (ss float64Series) changeName(name string) Series {
-	ss.Name = name
-	return ss
-}
-
-func (ss float64Series) getName() string {
-	return ss.Name
-}
-
-func (ss float64Series) getLength() int {
-	return len(ss.Data)
-}
-
-// TIME SERIES
-type timeSeries struct {
-	Name    string
-	Data    []time.Time
-	NilData []int
-}
-
-func makeTimeSeries(data []time.Time, nilData []int, name string) timeSeries {
-	ss := timeSeries{
-		Name:    name,
-		Data:    data,
-		NilData: nilData,
-	}
-	return ss
-}
-
-func (ss timeSeries) getSeriesData(start int, count int) (interface{}, string) {
-	first, last := getDataIndicies(start, count, len(ss.Data))
-	return ss.Data[first:last], fmt.Sprintf("%T", ss.Data)
-}
-
-func (ss timeSeries) changeName(name string) Series {
-	ss.Name = name
-	return ss
-}
-
-func (ss timeSeries) getName() string {
-	return ss.Name
-}
-
-func (ss timeSeries) getLength() int {
-	return len(ss.Data)
 }

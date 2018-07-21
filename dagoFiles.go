@@ -9,19 +9,30 @@ import (
 )
 
 // ReadFile : Returns a DataFrame with all the data from the file
-func ReadFile(filePath string, fileFormat string) DataFrame {
+func ReadFile(filePath string) DataFrame {
 	DF := DataFrame{}
 	byteData, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		return DF
 	}
-	switch fileFormat {
+	parts := strings.Split(filePath, ".")
+	fileExtension := parts[len(parts)-1]
+	switch fileExtension {
 	case "csv":
 		DF = readCSV(byteData, true)
 	case "json":
 		DF = readJSON(byteData)
 	}
 	return DF
+}
+
+// ReadFiles : Read multiple files into a slice of DataFrames
+func ReadFiles(filePaths ...string) []DataFrame {
+	dfs := []DataFrame{}
+	for _, v := range filePaths {
+		dfs = append(dfs, ReadFile(v))
+	}
+	return dfs
 }
 
 func readCSV(data []byte, header bool) DataFrame {
@@ -34,7 +45,6 @@ func readCSV(data []byte, header bool) DataFrame {
 	if err != nil {
 		return DF
 	}
-
 	tRecords := map[string][]string{} // transposed records
 	headers := []string{}
 	if header {
@@ -51,7 +61,6 @@ func readCSV(data []byte, header bool) DataFrame {
 	for _, v := range headers {
 		tRecords[v] = make([]string, recLen)
 	}
-
 	for i, v := range records {
 		for j, w := range v {
 			tRecords[headers[j]][i] = w
