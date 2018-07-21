@@ -165,18 +165,30 @@ func (DF *DataFrame) Levelize() {
 func (DF *DataFrame) Head(rows int) {
 	for i, v := range DF.Sets {
 		data, dtype := v.getSeriesData(0, rows)
-		DType := string(dtype[0]) + fmt.Sprintf("%v", DF.Sets[i].getLength()) + string(dtype[1:])
-		fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].getName(), DType, data)
+		serLen := DF.Sets[i].getLength()
+		DType := string(dtype[0]) + fmt.Sprintf("%v", serLen) + string(dtype[1:])
+		if rows >= serLen {
+			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].getName(), DType, data)
+		} else {
+			fmt.Printf("%5v %15v %20v\t%v...\n", i, DF.Sets[i].getName(), DType, data)
+		}
 	}
+	fmt.Println()
 }
 
 // Tail : Prints the last few rows in the dataframe
 func (DF *DataFrame) Tail(rows int) {
 	for i, v := range DF.Sets {
 		data, dtype := v.getSeriesData(-rows, rows)
-		DType := string(dtype[0]) + fmt.Sprintf("%v", DF.Sets[i].getLength()) + string(dtype[1:])
-		fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].getName(), DType, data)
+		serLen := DF.Sets[i].getLength()
+		DType := string(dtype[0]) + fmt.Sprintf("%v", serLen) + string(dtype[1:])
+		if rows >= serLen {
+			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].getName(), DType, data)
+		} else {
+			fmt.Printf("%5v %15v %20v\t...%v\n", i, DF.Sets[i].getName(), DType, data)
+		}
 	}
+	fmt.Println()
 }
 
 // Filter : filters the selected column by the value per the logical operator

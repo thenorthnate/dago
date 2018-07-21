@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"io/ioutil"
 	"strings"
+	"unicode"
 )
 
 // ReadFile : Returns a DataFrame with all the data from the file
@@ -24,6 +25,8 @@ func ReadFile(filePath string, fileFormat string) DataFrame {
 }
 
 func readCSV(data []byte, header bool) DataFrame {
+	// TODO: Check if each header character is a letter or not using unicode.IsLetter() bool
+	// must loop through a string to get a rune value for each input to IsLetter
 	DF := DataFrame{level: true}
 	stringData := string(data)
 	r := csv.NewReader(strings.NewReader(stringData))
@@ -36,7 +39,7 @@ func readCSV(data []byte, header bool) DataFrame {
 	headers := []string{}
 	if header {
 		for _, v := range records[0] {
-			headers = append(headers, strings.Trim(v, " "))
+			headers = append(headers, formatStringName(v))
 		}
 		records = records[1:]
 	} else {
@@ -56,6 +59,17 @@ func readCSV(data []byte, header bool) DataFrame {
 	}
 	DF = New(tRecords)
 	return DF
+}
+
+func formatStringName(name string) string {
+	name = strings.TrimSpace(name)
+	outString := ""
+	for _, runeVal := range name {
+		if unicode.IsLetter(runeVal) || unicode.IsNumber(runeVal) {
+			outString += string(runeVal)
+		}
+	}
+	return outString
 }
 
 /*
