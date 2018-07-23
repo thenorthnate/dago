@@ -54,7 +54,7 @@ func (DF *DataFrame) Add(data interface{}) {
 	newDf := New(data)
 	if DF.level {
 		if newDf.level {
-			if newDf.Sets[0].Dstats.length == DF.Sets[0].Dstats.length {
+			if newDf.Sets[0].Dstats.Length == DF.Sets[0].Dstats.Length {
 				for _, v := range newDf.Sets {
 					DF.Sets = append(DF.Sets, v)
 				}
@@ -72,7 +72,7 @@ func (DF *DataFrame) Add(data interface{}) {
 // GetInts : Returns the slice of ints in that series, or an empty slice if series has no ints
 func (DF *DataFrame) GetInts(index int) []int {
 	SS := DF.Sets[index]
-	rawData, _ := SS.getSeriesData(0, -1)
+	rawData := SS.getSeriesData(0, -1)
 	data, ok := rawData.([]int)
 	if ok {
 		return data
@@ -163,13 +163,12 @@ func (DF *DataFrame) Levelize() {
 // Head : Prints the first few rows in the dataframe
 func (DF *DataFrame) Head(rows int) {
 	for i, v := range DF.Sets {
-		data, dtype := v.getSeriesData(0, rows)
-		serLen := DF.Sets[i].Dstats.length
-		DType := string(dtype[0]) + fmt.Sprintf("%v", serLen) + string(dtype[1:])
+		serLen := DF.Sets[i].Dstats.Length
+		DType := string(v.Dstats.PrettyType[0]) + fmt.Sprintf("%v", serLen) + string(v.Dstats.PrettyType[1:])
 		if rows >= serLen {
-			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].Name, DType, data)
+			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].Name, DType, v.getSeriesData(0, rows))
 		} else {
-			fmt.Printf("%5v %15v %20v\t%v...\n", i, DF.Sets[i].Name, DType, data)
+			fmt.Printf("%5v %15v %20v\t%v...\n", i, DF.Sets[i].Name, DType, v.getSeriesData(0, rows))
 		}
 	}
 	fmt.Println()
@@ -178,13 +177,12 @@ func (DF *DataFrame) Head(rows int) {
 // Tail : Prints the last few rows in the dataframe
 func (DF *DataFrame) Tail(rows int) {
 	for i, v := range DF.Sets {
-		data, dtype := v.getSeriesData(-rows, rows)
-		serLen := DF.Sets[i].Dstats.length
-		DType := string(dtype[0]) + fmt.Sprintf("%v", serLen) + string(dtype[1:])
+		serLen := DF.Sets[i].Dstats.Length
+		DType := string(v.Dstats.PrettyType[0]) + fmt.Sprintf("%v", serLen) + string(v.Dstats.PrettyType[1:])
 		if rows >= serLen {
-			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].Name, DType, data)
+			fmt.Printf("%5v %15v %20v\t%v\n", i, DF.Sets[i].Name, DType, v.getSeriesData(-rows, rows))
 		} else {
-			fmt.Printf("%5v %15v %20v\t...%v\n", i, DF.Sets[i].Name, DType, data)
+			fmt.Printf("%5v %15v %20v\t...%v\n", i, DF.Sets[i].Name, DType, v.getSeriesData(-rows, rows))
 		}
 	}
 	fmt.Println()
@@ -196,8 +194,24 @@ func (DF *DataFrame) Filter(column interface{}, logicalOp string, value interfac
 }
 
 // Describe : Returns another DataFrame with a full set of descriptive statistics of the dataset
-func (DF *DataFrame) Describe() DataFrame {
-	return DataFrame{}
+func (DF *DataFrame) Describe() []Sstats {
+	output := []Sstats{}
+	for _, v := range DF.Sets {
+		output = append(output, v.Dstats)
+	}
+	return output
+}
+
+// Convert : converts a series of one type to a series of another type
+func (DF *DataFrame) Convert(column interface{}, dtype string) {
+	selectedIndicies := DF.getIndicies(column)
+	for _, v := range selectedIndicies {
+		switch dtype {
+		case "int":
+			DF.Sets[v].convertStringToInt()
+
+		}
+	}
 }
 
 /*
@@ -205,11 +219,6 @@ func (DF *DataFrame) Describe() DataFrame {
 // Reorder : Reorders the DataFrame to the order specified in the input
 func (DF *DataFrame) Reorder(ser ...string) {
 	indicies := DF.getIndicies(ser)
-
-}
-
-// Convert : converts a series of one type to a series of another type
-func (DF *DataFrame) Convert(index int, dtype string) {
 
 }
 

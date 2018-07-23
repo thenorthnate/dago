@@ -38,6 +38,7 @@ func ReadFiles(filePaths ...string) []DataFrame {
 func readCSV(data []byte, header bool) DataFrame {
 	// TODO: Check if each header character is a letter or not using unicode.IsLetter() bool
 	// must loop through a string to get a rune value for each input to IsLetter
+	// TODO: load the file in order! Don't use a map... that is not ordered!
 	DF := DataFrame{level: true}
 	stringData := string(data)
 	r := csv.NewReader(strings.NewReader(stringData))

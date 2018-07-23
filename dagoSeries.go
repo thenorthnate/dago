@@ -6,6 +6,13 @@ import (
 	"time"
 )
 
+const (
+	iType = iota
+	sType
+	fType
+	tType
+)
+
 // Series : struct holding each dataset
 type Series struct {
 	Name    string
@@ -14,12 +21,20 @@ type Series struct {
 	Fdata   []float64
 	Tdata   []time.Time
 	Nildata []int
-	Dstats  sstats
+	Dstats  Sstats
 }
 
-type sstats struct {
-	length int
-	dtype  string
+// Sstats : struct that holds all statistical information about the series
+type Sstats struct {
+	// General Stats for all series types
+	Length     int
+	Dtype      int
+	PrettyType string
+	Unique     int
+
+	// Numerical Stats
+	Mean   float64
+	Stddev float64
 }
 
 func makeSeries(data interface{}, nilData []int, sName string) Series {
@@ -30,26 +45,30 @@ func makeSeries(data interface{}, nilData []int, sName string) Series {
 	switch D := data.(type) {
 	case []int:
 		S.Idata = D
-		S.Dstats.length = len(D)
-		S.Dstats.dtype = "int"
+		S.Dstats.Length = len(D)
+		S.Dstats.Dtype = iType
+		S.Dstats.PrettyType = fmt.Sprintf("%T", D)
 	case []string:
 		S.Sdata = D
-		S.Dstats.length = len(D)
-		S.Dstats.dtype = "string"
+		S.Dstats.Length = len(D)
+		S.Dstats.Dtype = sType
+		S.Dstats.PrettyType = fmt.Sprintf("%T", D)
 	case []float64:
 		S.Fdata = D
-		S.Dstats.length = len(D)
-		S.Dstats.dtype = "float64"
+		S.Dstats.Length = len(D)
+		S.Dstats.Dtype = fType
+		S.Dstats.PrettyType = fmt.Sprintf("%T", D)
 	case []time.Time:
 		S.Tdata = D
-		S.Dstats.length = len(D)
-		S.Dstats.dtype = "time.Time"
+		S.Dstats.Length = len(D)
+		S.Dstats.Dtype = tType
+		S.Dstats.PrettyType = fmt.Sprintf("%T", D)
 	}
 	// Run stats here? or in New func?
 	return S
 }
 
-func getDataIndicies(start int, count int, dLen int) (int, int) {
+func getDataIndicies(start, count, dLen int) (int, int) {
 	if math.Abs(float64(start)) < float64(dLen) {
 		if start >= 0 {
 			if count > 0 {
@@ -72,26 +91,35 @@ func getDataIndicies(start int, count int, dLen int) (int, int) {
 	return dLen, dLen
 }
 
-func (S *Series) getSeriesData(start int, count int) (interface{}, string) {
-	first, last := getDataIndicies(start, count, S.Dstats.length)
-	switch S.Dstats.dtype {
-	case "int":
+func (S *Series) getSeriesData(start, count int) interface{} {
+	first, last := getDataIndicies(start, count, S.Dstats.Length)
+	switch S.Dstats.Dtype {
+	case iType:
 		data := S.Idata[first:last]
-		return data, fmt.Sprintf("%T", data)
-	case "string":
+		return data
+	case sType:
 		data := S.Sdata[first:last]
-		return data, fmt.Sprintf("%T", data)
-	case "float64":
+		return data
+	case fType:
 		data := S.Fdata[first:last]
-		return data, fmt.Sprintf("%T", data)
-	case "time.Time":
+		return data
+	case tType:
 		data := S.Tdata[first:last]
-		return data, fmt.Sprintf("%T", data)
+		return data
 	}
 	data := -1
-	return data, fmt.Sprintf("%T", data)
+	return data
 }
 
 func (S *Series) goDescribe() {
-
+	switch S.Dstats.Dtype {
+	case iType:
+		S.describeIntSeries()
+	case sType:
+		S.describeStringSeries()
+	case fType:
+		S.describeFloatSeries()
+	case tType:
+		S.describeTimeSeries()
+	}
 }
